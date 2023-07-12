@@ -527,6 +527,8 @@ export interface PushNotificationIOSStatic {
    */
   getInitialNotification(): Promise<PushNotification | null>;
 
+  getInitialAction(): Promise<PushNotification | null>;
+
   /**
    * Sets notification category to notification center.
    * Used to set specific actions for notifications that contains specified category

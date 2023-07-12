@@ -32,6 +32,8 @@ static NSString *const kErrorUnableToRequestPermissions = @"E_UNABLE_TO_REQUEST_
 
 @implementation RNCPushNotificationIOS
 
+@synthesize initialAction;
+
 RCT_EXPORT_MODULE()
 
 - (dispatch_queue_t)methodQueue
@@ -59,6 +61,16 @@ RCT_EXPORT_MODULE()
                                                name:kRemoteNotificationRegistrationFailed
                                              object:nil];
 }
+
++ (instancetype)sharedInstance {
+    static RNCPushNotificationIOS *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[self alloc] init];
+    });
+    return sharedInstance;
+}
+
 
 - (void)stopObserving
 {
@@ -122,10 +134,27 @@ RCT_EXPORT_MODULE()
 }
 
 + (void)didReceiveNotificationResponse:(UNNotificationResponse *)response
-API_AVAILABLE(ios(10.0)) {
+            fetchCompletionHandler:(void (^)(void))completionHandler API_AVAILABLE(ios(10.0)) {
+    RNCPushNotificationIOS *sharedInstance = [RNCPushNotificationIOS sharedInstance];
+    NSMutableDictionary *formattedResponse = [[RCTConvert RCTFormatUNNotificationResponse:response] mutableCopy];
+    sharedInstance.initialAction = formattedResponse;
+
+    NSString *notificationId = [[NSUUID UUID] UUIDString];
+    formattedResponse[@"notificationId"] = notificationId;
+    formattedResponse[@"remote"] = @YES;
+
+    if (completionHandler) {
+    if (!sharedInstance.remoteNotificationCallbacks) {
+      // Lazy initialization
+      sharedInstance.remoteNotificationCallbacks = [NSMutableDictionary dictionary];
+    }
+    sharedInstance.remoteNotificationCallbacks[notificationId] = completionHandler;
+  }
+
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kLocalNotificationReceived
                                                       object:self
-                                                    userInfo:[RCTConvert RCTFormatUNNotificationResponse:response]];
+                                                    userInfo: formattedResponse];
 }
 
 - (void)handleLocalNotificationReceived:(NSNotification *)notification
@@ -165,6 +194,22 @@ API_AVAILABLE(ios(10.0)) {
     @"details": error.userInfo,
   };
   [self sendEventWithName:@"remoteNotificationRegistrationError" body:errorDetails];
+}
+
+- (NSDictionary *)getAndClearInitialAction {
+  RNCPushNotificationIOS *sharedInstance = [RNCPushNotificationIOS sharedInstance];
+    NSDictionary *initialAction = [sharedInstance.initialAction copy];
+    sharedInstance.initialAction = nil;
+    return initialAction;
+}
+
+RCT_EXPORT_METHOD(getInitialAction:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    NSDictionary *initialAction = [self getAndClearInitialAction];
+    if (initialAction) {
+        resolve(initialAction);
+    } else {
+        reject(@"E_INITIAL_ACTION_NOT_AVAILABLE", @"Initial action is not available.", nil);
+    }
 }
 
 RCT_EXPORT_METHOD(onFinishRemoteNotification:(NSString *)notificationId fetchResult:(UIBackgroundFetchResult)result)

@@ -12,6 +12,8 @@ extern NSString *const RNCRemoteNotificationReceived;
 
 @interface RNCPushNotificationIOS : RCTEventEmitter
 
+@property (nonatomic, strong) NSMutableDictionary *initialAction;
+
 typedef void (^RNCRemoteNotificationCallback)(UIBackgroundFetchResult result);
 
 #if !TARGET_OS_TV
@@ -20,8 +22,10 @@ typedef void (^RNCRemoteNotificationCallback)(UIBackgroundFetchResult result);
 + (void)didReceiveRemoteNotification:(NSDictionary *)notification;
 + (void)didReceiveRemoteNotification:(NSDictionary *)notification fetchCompletionHandler:(RNCRemoteNotificationCallback)completionHandler;
 + (void)didReceiveLocalNotification:(UILocalNotification *)notification;
-+ (void)didReceiveNotificationResponse:(UNNotificationResponse *)response API_AVAILABLE(ios(10.0));
++ (void)didReceiveNotificationResponse:(UNNotificationResponse *)response fetchCompletionHandler:(void (^)(void))completionHandler API_AVAILABLE(ios(10.0));
 + (void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error;
++ (instancetype)sharedInstance;
+- (NSDictionary *)getAndClearInitialAction;
 #endif
 
 @end
