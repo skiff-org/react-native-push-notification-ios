@@ -459,8 +459,6 @@ class PushNotificationIOS {
     /**
    * This method returns a promise that resolves to either the action
    * object if the app was launched by a push notification action, or `null` otherwise.
-   *
-   * See https://reactnative.dev/docs/pushnotificationios.html#getinitialnotification
    */
     static getInitialAction(): Promise<?PushNotificationIOS>{
       invariant(
@@ -481,7 +479,6 @@ class PushNotificationIOS {
    *
    */
   constructor(nativeNotif: Object) {
-    console.log("nativeNotif : ",nativeNotif);
     this._data = {};
     this._remoteNotificationCompleteCallbackCalled = false;
     this._isRemote = nativeNotif.remote;
