@@ -144,12 +144,12 @@ RCT_EXPORT_MODULE()
     formattedResponse[@"remote"] = @YES;
 
     if (completionHandler) {
-    if (!sharedInstance.remoteNotificationCallbacks) {
+      if (!sharedInstance.remoteNotificationCallbacks) {
       // Lazy initialization
-      sharedInstance.remoteNotificationCallbacks = [NSMutableDictionary dictionary];
+        sharedInstance.remoteNotificationCallbacks = [NSMutableDictionary dictionary];
+      }
+      sharedInstance.remoteNotificationCallbacks[notificationId] = completionHandler;
     }
-    sharedInstance.remoteNotificationCallbacks[notificationId] = completionHandler;
-  }
 
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kLocalNotificationReceived
